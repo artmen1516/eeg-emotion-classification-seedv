@@ -1,0 +1,353 @@
+{
+  "environment": {
+    "python": "3.12.15",
+    "numpy": "2.5.4",
+    "scikit_learn": "1.9.1",
+    "platform": "Linux-7.2.12-orbstack-00394-gbecdd6130068-aarch64-with-glibc2.41"
+  },
+  "E1_committed_constants": {
+    "cell_index_0based": 37,
+    "cell_title": "#@title Model Training",
+    "cell_magic_first_line": "%%capture",
+    "committed_outputs_present": false,
+    "notebook_head_sha": "203ae910fb296d6dfab588058d78185cd4ecafc2",
+    "notebook_blob_sha": "4c31f50269e1f994c8fe89ed4baa5ff10af6e237",
+    "verbatim": {
+      "training_percent": "training_percent = 0.8 # @param {type:\"slider\", min:0.5, max:0.8, step:0.1}",
+      "total_array_samples": "total_array_samples = len(y)",
+      "train_samples": "train_samples = math.floor((training_percent*total_array_samples))",
+      "trainList": "trainList =  list(range(1, train_samples + 1, 1))",
+      "testList": "testList =  list(range(train_samples + 1, total_array_samples, 1))",
+      "val_percent": "val_percent = 1 - training_percent",
+      "split_call": "splits = windows_dataset.split({\"train\": trainList, \"test\": testList})",
+      "train_set_reassign": "train_set = windows_dataset",
+      "x_train": "X_train = SliceDataset(train_set, idx=0)",
+      "y_train_set": "y_train_set = y[0:train_samples]",
+      "y_test_set": "y_test_set = y[train_samples + 1:]",
+      "train_test_split": "train_indices, val_indices = train_test_split(",
+      "subsets": "val_subset = Subset(train_set, val_indices)"
+    },
+    "training_percent_value": 0.8,
+    "training_percent_cell35": "training_percent = 0.8 # @param {type:\"slider\", min:0.5, max:0.8, step:0.1}"
+  },
+  "E2_primary": {
+    "N": 576,
+    "training_percent": 0.8,
+    "train_samples_floor": 460,
+    "val_percent_repr": "0.19999999999999996",
+    "val_percent_exact": "900719925474099/4503599627370496",
+    "trainList_range": [
+      1,
+      460,
+      460
+    ],
+    "testList_range": [
+      461,
+      575,
+      115
+    ],
+    "base_size": 576,
+    "sklearn_n_train": 460,
+    "sklearn_n_val": 116,
+    "sklearn_train_first_last": [
+      0,
+      459
+    ],
+    "sklearn_val_first_last": [
+      460,
+      575
+    ],
+    "ceil_rule_check": {
+      "float_test_size_times_N": 115.19999999999997,
+      "ceil": 116,
+      "floor": 115
+    },
+    "n_test": 115,
+    "n_val": 116,
+    "n_intersection": 115,
+    "ratio_exact": "1/1",
+    "ratio_float": 1.0,
+    "test_first_last": [
+      461,
+      575
+    ],
+    "val_first_last": [
+      460,
+      575
+    ],
+    "intersection_first_last": [
+      461,
+      575
+    ],
+    "test_minus_val_first10": [],
+    "val_minus_test_first10": [
+      460
+    ],
+    "n_test_variants": {
+      "ceil": {
+        "n_val": 116,
+        "val_first_last": [
+          460,
+          575
+        ],
+        "n_test": 115,
+        "n_intersection": 115,
+        "ratio_exact": "1/1",
+        "ratio_float": 1.0,
+        "test_first_last": [
+          461,
+          575
+        ],
+        "intersection_first_last": [
+          461,
+          575
+        ],
+        "test_minus_val_first10": [],
+        "val_minus_test_first10": [
+          460
+        ]
+      },
+      "floor": {
+        "n_val": 115,
+        "val_first_last": [
+          461,
+          575
+        ],
+        "n_test": 115,
+        "n_intersection": 115,
+        "ratio_exact": "1/1",
+        "ratio_float": 1.0,
+        "test_first_last": [
+          461,
+          575
+        ],
+        "intersection_first_last": [
+          461,
+          575
+        ],
+        "test_minus_val_first10": [],
+        "val_minus_test_first10": []
+      },
+      "round": {
+        "n_val": 115,
+        "val_first_last": [
+          461,
+          575
+        ],
+        "n_test": 115,
+        "n_intersection": 115,
+        "ratio_exact": "1/1",
+        "ratio_float": 1.0,
+        "test_first_last": [
+          461,
+          575
+        ],
+        "intersection_first_last": [
+          461,
+          575
+        ],
+        "test_minus_val_first10": [],
+        "val_minus_test_first10": []
+      }
+    },
+    "N_sensitivity": {
+      "N_values_tested": 2000,
+      "distinct_ratios": [
+        "1/1"
+      ],
+      "all_ratio_equal_1": true,
+      "N_576": [
+        "1/1",
+        115,
+        115
+      ],
+      "N_540": [
+        "1/1",
+        107,
+        107
+      ],
+      "N_560": [
+        "1/1",
+        111,
+        111
+      ],
+      "N_600": [
+        "1/1",
+        119,
+        119
+      ],
+      "N_720": [
+        "1/1",
+        143,
+        143
+      ],
+      "N_2160": [
+        "1/1",
+        431,
+        431
+      ]
+    }
+  },
+  "E3_base_sensitivity": {
+    "primary_counterfactual": {
+      "base": "np.arange(1, 461)  # trainList",
+      "base_size": 460,
+      "sklearn_n_train": 368,
+      "sklearn_n_val": 92,
+      "sklearn_val_first_last": [
+        369,
+        460
+      ],
+      "n_test": 115,
+      "n_val": 92,
+      "n_intersection": 0,
+      "ratio_exact": "0/1",
+      "ratio_float": 0.0,
+      "test_first_last": [
+        461,
+        575
+      ],
+      "val_first_last": [
+        369,
+        460
+      ],
+      "intersection_first_last": null,
+      "test_minus_val_first10": [
+        461,
+        462,
+        463,
+        464,
+        465,
+        466,
+        467,
+        468,
+        469,
+        470
+      ],
+      "val_minus_test_first10": [
+        369,
+        370,
+        371,
+        372,
+        373,
+        374,
+        375,
+        376,
+        377,
+        378
+      ]
+    },
+    "zero_based_variant": {
+      "base": "np.arange(0, 460)",
+      "sklearn_n_val": 92,
+      "sklearn_val_first_last": [
+        368,
+        459
+      ],
+      "n_test": 115,
+      "n_val": 92,
+      "n_intersection": 0,
+      "ratio_exact": "0/1",
+      "ratio_float": 0.0,
+      "test_first_last": [
+        461,
+        575
+      ],
+      "val_first_last": [
+        368,
+        459
+      ],
+      "intersection_first_last": null,
+      "test_minus_val_first10": [
+        461,
+        462,
+        463,
+        464,
+        465,
+        466,
+        467,
+        468,
+        469,
+        470
+      ],
+      "val_minus_test_first10": [
+        368,
+        369,
+        370,
+        371,
+        372,
+        373,
+        374,
+        375,
+        376,
+        377
+      ]
+    },
+    "discrepancy_primary_minus_counterfactual": {
+      "E2_ratio": "1/1",
+      "E3_ratio": "0/1",
+      "absolute_difference": 1.0
+    }
+  },
+  "E4_static_audit": {
+    "a_partition": {
+      "quote_trainList": "trainList =  list(range(1, train_samples + 1, 1))",
+      "quote_testList": "testList =  list(range(train_samples + 1, total_array_samples, 1))",
+      "len_train": 460,
+      "len_test": 115,
+      "intersection_train_test": 0,
+      "union_size": 575,
+      "missing_indices": [
+        0
+      ],
+      "finding": "trainList and testList are disjoint and together cover 1..575; index 0 is never selected. 575 of the stipulated 576 positional slots are used."
+    },
+    "b_length_consistency": {
+      "quote_testList": "testList =  list(range(train_samples + 1, total_array_samples, 1))",
+      "quote_y_test_set": "y_test_set = y[train_samples + 1:]",
+      "len_testList": 115,
+      "len_y_test_set_under_N_576": 115,
+      "match": true,
+      "finding": "test_set and y_test_set both have 115 elements under N = 576; the count matches even though the objects index different spaces."
+    },
+    "c_train_label_alignment": {
+      "quote_trainList": "trainList =  list(range(1, train_samples + 1, 1))",
+      "quote_y_train_set": "y_train_set = y[0:train_samples]",
+      "trainList_first_last": [
+        1,
+        460
+      ],
+      "y_train_set_slice": "y[0:460] -> labels for positional samples 0..459",
+      "len_match": true,
+      "finding": "lengths match (460) but the offsets do not: window indices 1..460 are paired with labels 0..459, so every training label is shifted by one sample relative to its window; the training block is internally inconsistent."
+    },
+    "d_slice_dataset_indices": {
+      "quote_x_train": "X_train = SliceDataset(train_set, idx=0)",
+      "quote_train_set_reassign": "train_set = windows_dataset",
+      "notebook_import": "from skorch.helper import predefined_split, SliceDataset  (cell 35)",
+      "upstream_source": "skorch/helper.py, SliceDataset.__init__",
+      "upstream_quote": "self.indices_ = (self.indices if self.indices is not None else np.arange(len(self.dataset)))",
+      "attribute_exists": true,
+      "base_identity": "X_train.indices_ == np.arange(len(windows_dataset))",
+      "finding": "SliceDataset does expose indices_ (its base class is not torch Subset but a Sequence that materialises arange(len(dataset))). The committed line does not raise AttributeError, and the validation split is taken over the FULL windows_dataset, not over trainList, because train_set was reassigned from splits['train'] to windows_dataset two lines earlier."
+    },
+    "e_what_is_counted": {
+      "quote_y": "y = [epoch.metadata['target'].values for epoch in list_of_epochs]",
+      "quote_total": "total_array_samples = len(y)",
+      "quote_window_creation": [
+        "trial_window_time = 50",
+        "trial_window_stride_time = 0.01",
+        "    drop_last_window=True,"
+      ],
+      "quote_score_filter": [
+        "list_of_epochs = [epochs[epochs.metadata['score'] >= 4] for epochs in labeled_dict_vars.values()]",
+        "print('Len filtered by score', len(list_of_epochs))"
+      ],
+      "annotations_per_session_file": 15,
+      "session_definitions": 3,
+      "labeled_files_expected": "16 subjects x 3 sessions = 48",
+      "max_epochs_before_filter": 720,
+      "finding": "total_array_samples = len(y) where y concatenates epoch.metadata['target'] over list_of_epochs, i.e. it counts SCORE-FILTERED EPOCHS (trials), not 50 s windows. windows_dataset (cell 33, 50 s window, 0.01 s stride, drop_last_window=True) has one row per sliding window, which is far more than len(y). So the split lists derived from the trial count are applied to a window-indexed dataset. N = 576 is a plausible filtered-trial count (<= 15*3*16 = 720) but is not recorded anywhere in the committed notebook: cell 37 is %%capture, so no stored output confirms it."
+    }
+  }
+}

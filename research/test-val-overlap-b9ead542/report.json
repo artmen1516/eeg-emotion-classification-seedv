@@ -1,0 +1,28 @@
+{
+  "findings": [
+    {
+      "title": "Every test index is also a validation index (ratio exactly 1.0)",
+      "evidence": "Under the committed cell-37 arithmetic with N = 576 and training_percent = 0.8: testList = 461..575 (|test| = 115) and validation = 460..575 (|val| = 116) from train_test_split(np.arange(576), test_size = 1-0.8, shuffle=False). Intersection = 461..575, so |test intersect validation| / |test| = 115/115 = 1/1 = 1.0 exactly. test minus validation is empty; validation minus test is {460}."
+    },
+    {
+      "title": "The overlap arises because the validation base is the full dataset, not the training split",
+      "evidence": "Cell 37 sets train_set = splits['train'] and then overwrites it with train_set = windows_dataset before X_train = SliceDataset(train_set, idx=0). skorch's SliceDataset sets indices_ = np.arange(len(dataset)), so the validation split covers 0..575. Recomputing over trainList (1..460) yields validation 369..460 and overlap 0/115 = 0.0, a discrepancy of 1.0."
+    },
+    {
+      "title": "Test-set leakage into validation and model selection in the committed run",
+      "evidence": "val_subset = Subset(train_set, val_indices) is passed as predefined_split to EEGClassifier, and test_set (indices 461..575) is later scored with clf.score. Because all 115 test indices are inside val_indices, validation/early stopping saw the entire test set, so the reported test accuracy is not held out."
+    },
+    {
+      "title": "The result is robust to sklearn rounding and to the exact value of N",
+      "evidence": "ceil(n_test) = 116 gives validation 460..575 and ratio 1/1; floor/round give 461..575 and ratio 1/1. A sweep of 2000 values of N (2..2000 plus 540, 560, 570, 576, 580, 600, 720, 2160) produced the single distinct ratio 1/1."
+    },
+    {
+      "title": "The split block is internally inconsistent (dropped sample, label shift, mixed index spaces)",
+      "evidence": "trainList 1..460 and testList 461..575 are disjoint and cover 1..575 but never select index 0; y_train_set = y[0:460] pairs labels 0..459 with windows 1..460 (one-sample shift); y_test_set = y[461:] matches len(testList) = 115 in count but labels epochs while test_set indexes windows; total_array_samples = len(y) is the score-filtered epoch count (<= 720), not the number of 50 s windows."
+    },
+    {
+      "title": "N = 576 is a stipulated parameter, not a value the committed notebook records",
+      "evidence": "Cell 37 begins with %%capture and stores no outputs, so 'Total Array Samples' is not present in the committed file. total_array_samples = len(y) where y concatenates epoch.metadata['target'] over the score-filtered epochs; with 15 annotations per session file, 3 sessions and 16 subjects the pre-filter maximum is 720, so 576 is plausible but unverified."
+    }
+  ]
+}

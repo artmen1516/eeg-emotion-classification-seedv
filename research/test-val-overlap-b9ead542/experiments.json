@@ -1,0 +1,137 @@
+{
+  "measurements": [
+    {
+      "experiment": "E1",
+      "name": "Committed-constant extraction from cell 37",
+      "notebook": "process_seedv_raw_files_with_mne_from_drive.ipynb",
+      "cell_index_0based": 37,
+      "cell_magic": "%%capture",
+      "committed_outputs_present": false,
+      "notebook_head_sha": "203ae910fb296d6dfab588058d78185cd4ecafc2",
+      "notebook_blob_sha": "4c31f50269e1f994c8fe89ed4baa5ff10af6e237",
+      "verbatim": {
+        "training_percent": "training_percent = 0.8 # @param {type:\"slider\", min:0.5, max:0.8, step:0.1}  (cell 35)",
+        "total_array_samples": "total_array_samples = len(y)",
+        "train_samples": "train_samples = math.floor((training_percent*total_array_samples))",
+        "trainList": "trainList =  list(range(1, train_samples + 1, 1))",
+        "testList": "testList =  list(range(train_samples + 1, total_array_samples, 1))",
+        "val_percent": "val_percent = 1 - training_percent",
+        "split_call": "splits = windows_dataset.split({\"train\": trainList, \"test\": testList})",
+        "train_set_reassign": "train_set = windows_dataset",
+        "x_train": "X_train = SliceDataset(train_set, idx=0)",
+        "y_train_set": "y_train_set = y[0:train_samples]",
+        "y_test_set": "y_test_set = y[train_samples + 1:]",
+        "train_test_split": "train_indices, val_indices = train_test_split(",
+        "train_test_split_args": "X_train.indices_, test_size=val_percent, shuffle=False",
+        "val_subset": "val_subset = Subset(train_set, val_indices)"
+      }
+    },
+    {
+      "experiment": "E2",
+      "name": "Primary reproduction, base = full windows_dataset (stipulated N = 576)",
+      "N": 576,
+      "training_percent": 0.8,
+      "train_samples = floor(0.8*576)": 460,
+      "val_percent_repr": "0.19999999999999996",
+      "val_percent_exact_rational": "900719925474099/4503599627370496",
+      "trainList": {"range": [1, 460], "n": 460},
+      "testList": {"range": [461, 575], "n": 115},
+      "validation_base": "X_train.indices_ = np.arange(576) (SliceDataset over windows_dataset)",
+      "sklearn_n_train": 460,
+      "sklearn_n_val": 116,
+      "sklearn_train_indices": [0, 459],
+      "sklearn_val_indices": [460, 575],
+      "n_test": 115,
+      "n_val": 116,
+      "n_intersection": 115,
+      "overlap_ratio_exact": "115/115 = 1/1",
+      "overlap_ratio_float": 1.0,
+      "test_minus_validation": [],
+      "validation_minus_test": [460],
+      "ceil_rule": {"test_size*N": 115.19999999999997, "ceil": 116, "floor": 115}
+    },
+    {
+      "experiment": "E2b",
+      "name": "One-index robustness (n_test computed by ceil / floor / round)",
+      "ceil": {"n_val": 116, "validation": [460, 575], "n_intersection": 115, "ratio_exact": "1/1"},
+      "floor": {"n_val": 115, "validation": [461, 575], "n_intersection": 115, "ratio_exact": "1/1"},
+      "round": {"n_val": 115, "validation": [461, 575], "n_intersection": 115, "ratio_exact": "1/1"}
+    },
+    {
+      "experiment": "E2c",
+      "name": "Supplementary N-sensitivity sweep (threat: N is data-dependent)",
+      "N_values_tested": 2000,
+      "distinct_ratios": ["1/1"],
+      "all_ratio_equal_1": true,
+      "examples": {"540": "1/1", "560": "1/1", "576": "1/1", "600": "1/1", "720": "1/1", "2160": "1/1"}
+    },
+    {
+      "experiment": "E3",
+      "name": "Base-sensitivity control, validation over trainList (1..460)",
+      "sklearn_n_val": 92,
+      "validation_indices": [369, 460],
+      "n_test": 115,
+      "n_intersection": 0,
+      "overlap_ratio_exact": "0/1",
+      "overlap_ratio_float": 0.0,
+      "zero_based_variant": {"base": "np.arange(0,460)", "validation": [368, 459], "n_intersection": 0, "ratio_exact": "0/1"},
+      "discrepancy_vs_E2_absolute": 1.0
+    },
+    {
+      "experiment": "E4a",
+      "name": "Partition check",
+      "len_trainList": 460,
+      "len_testList": 115,
+      "train_test_intersection": 0,
+      "union_size": 575,
+      "never_selected_indices": [0]
+    },
+    {
+      "experiment": "E4b",
+      "name": "Test length consistency",
+      "len_testList": 115,
+      "len_y_test_set": 115,
+      "match": true
+    },
+    {
+      "experiment": "E4c",
+      "name": "Train label alignment",
+      "trainList": [1, 460],
+      "y_train_set_slice": "y[0:460]",
+      "lengths_match": true,
+      "offset": "windows 1..460 paired with labels 0..459"
+    },
+    {
+      "experiment": "E4d",
+      "name": "SliceDataset.indices_ audit",
+      "skorch_quote": "self.indices_ = (self.indices if self.indices is not None else np.arange(len(self.dataset)))",
+      "attribute_exists": true,
+      "attribute_error_expected": false,
+      "resolved_base": "np.arange(len(windows_dataset)), i.e. the full dataset"
+    },
+    {
+      "experiment": "E4e",
+      "name": "What total_array_samples counts",
+      "expression": "total_array_samples = len(y), y = concatenation of epoch.metadata['target'] over list_of_epochs (score >= 4)",
+      "unit": "score-filtered epochs (trials)",
+      "annotations_per_session_file": 15,
+      "sessions_per_subject": 3,
+      "subjects": 16,
+      "max_epochs_before_score_filter": 720,
+      "windows_dataset_length": "number of 50 s sliding windows (0.01 s stride, drop_last_window=True), far larger than len(y)",
+      "N_576_confirmed_by_committed_output": false
+    }
+  ],
+  "analysis": "Primary measurement (E2): under the stipulated N = 576, the committed code yields train_samples = floor(0.8*576) = 460, testList = 461..575 (115 indices) and, because train_set was reassigned to windows_dataset before X_train was built, X_train.indices_ = 0..575 and train_test_split(test_size=0.19999999999999996, shuffle=False) returns validation = 460..575 (116 indices). Every one of the 115 test indices 461..575 is in the validation set, so |test intersect validation| = 115 and the ratio is exactly 115/115 = 1/1 = 1.0, with test minus validation empty. E2b shows the same ratio for ceil/floor/round variants of n_test, and E2c shows ratio 1/1 for every N tested (2..2000 plus 540,560,570,576,580,600,720,2160), so the verdict does not depend on the one-index sklearn rounding or on the exact value of N. This meets the pre-registered support criterion (ratio == 1.0 exactly). The refute criterion (ratio < 0.5) is not met, and the inconclusive band (0.5 <= ratio < 1.0) is not entered. The E3 counterfactual quantifies the base discrepancy: had the validation split been taken over trainList (1..460), validation would be 369..460 and its overlap with the test set would be 0/115 = 0.0, a difference of 1.0 from the primary result. E4 confirms the mechanism (train_set = windows_dataset at cell 37 line 22) and records additional internal inconsistencies (index 0 dropped, training labels off by one, trial-count lists applied to a window-indexed dataset, N = 576 never printed because the cell is %%capture).",
+  "status": "supported",
+  "evidence": [
+    "E2: |test| = 115 (461..575), |validation| = 116 (460..575), |test intersect validation| = 115, ratio = 1/1 = 1.0 exact; test minus validation = empty set; validation minus test = {460}.",
+    "E2: sklearn 1.9.1, numpy 2.5.4, Python 3.12.15; train_test_split(np.arange(576), test_size=0.19999999999999996, shuffle=False) -> train 0..459 (460), validation 460..575 (116); ceil(115.2)=116, floor=115.",
+    "E2b: ceil, floor and round n_test variants all give ratio 1/1 (validation 460..575 or 461..575).",
+    "E2c: supplementary sweep over 2000 values of N (2..2000 plus 540,560,570,576,580,600,720,2160) yields the single distinct ratio 1/1; the result is insensitive to N.",
+    "E3: counterfactual base trainList 1..460 gives validation 369..460, intersection with test = 0, ratio 0/1; zero-based variant 0..459 gives 368..459 and ratio 0/1. Absolute discrepancy vs E2 = 1.0.",
+    "E1: cell 37 quotes val_percent = 1 - training_percent with training_percent = 0.8 (cell 35), so test_size = 0.19999999999999996; the cell is %%capture and stores no output, so no committed number contradicts the reproduction.",
+    "E4d: skorch helper.py SliceDataset.__init__ sets indices_ = np.arange(len(dataset)) when indices is None; the committed line X_train = SliceDataset(train_set, idx=0) therefore resolves to the full dataset after train_set = windows_dataset, not to the training split.",
+    "Comparison against criteria: measured ratio 1/1 equals 1.0 -> support criterion satisfied; measured ratio is not < 0.5 -> refute criterion not satisfied; measured ratio is not in [0.5, 1.0) -> inconclusive band not entered."
+  ]
+}

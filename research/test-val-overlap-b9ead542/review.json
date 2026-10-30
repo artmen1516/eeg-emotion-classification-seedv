@@ -1,0 +1,42 @@
+{
+  "verdict": "supported",
+  "evidence": [
+    "E2 primary: N=576, training_percent=0.8 -> train_samples=460, testList=461..575 (115), val_percent=0.19999999999999996, validation=460..575 (116); |test intersect validation| = 115; ratio = 115/115 = 1/1 = 1.0 exactly.",
+    "E2b/e2c: ratio stays 1/1 for ceil/floor/round n_test variants and across 2000 tested values of N, so no rounding or N-dependence artifact produced the result.",
+    "Pre-registered support criterion (ratio == 1.0 exactly) is met; refute criterion (ratio < 0.5) and inconclusive band (0.5 <= ratio < 1.0) are not met.",
+    "E3 control: with validation computed over trainList (1..460) the ratio would be 0/1, showing the primary result depends entirely on the train_set = windows_dataset reassignment."
+  ],
+  "findings": [
+    {
+      "title": "Test set is a strict subset of the validation set under the committed code",
+      "detail": "Validation 460..575 contains all 115 test indices 461..575 plus training index 460; test minus validation is empty.",
+      "evidence": "experiment_results.json E2_primary (n_intersection=115, test_minus_val_first10=[], val_minus_test_first10=[460], ratio 1/1)."
+    },
+    {
+      "title": "The validation base is the full windows_dataset, not trainList",
+      "detail": "Cell 37 assigns splits['train'] to train_set and then immediately overwrites it with train_set = windows_dataset; X_train is built from that overwritten value, so X_train.indices_ = np.arange(len(windows_dataset)).",
+      "evidence": "E1 verbatim lines 22-24; E4d; skorch helper.py SliceDataset.__init__ sets indices_ = np.arange(len(dataset))."
+    },
+    {
+      "title": "Base discrepancy is decisive (ratio 1.0 vs 0.0)",
+      "detail": "If a reader assumes the validation split is computed over trainList, validation is 369..460 and shares no index with the test set (ratio 0/1). The committed reassignment reverses the conclusion.",
+      "evidence": "E3 primary_counterfactual and zero_based_variant; discrepancy_vs_E2_absolute = 1.0."
+    },
+    {
+      "title": "Consequence: test windows leak into model selection",
+      "detail": "Since val_subset (460..575) is passed to EEGClassifier as predefined_split and clf.score is later evaluated on test_set (461..575), every scored test window was also used for validation/early stopping. Reported test accuracy is therefore not a held-out estimate.",
+      "evidence": "E2 primary (all 115 test indices inside validation); cell 37 lines for predefined_split(val_subset) and clf.score(test_set, y=y_test_set)."
+    },
+    {
+      "title": "Split block is internally inconsistent",
+      "detail": "trainList 1..460 and testList 461..575 leave index 0 unused; y_train_set = y[0:460] pairs labels 0..459 with windows 1..460, an off-by-one label shift; y_test_set and testList lengths match (115) but index different spaces (epochs vs windows).",
+      "evidence": "E4a, E4b, E4c."
+    },
+    {
+      "title": "N = 576 is stipulated, not verified by the notebook",
+      "detail": "total_array_samples = len(y) counts score-filtered epochs (<= 720 = 15 annotations x 3 sessions x 16 subjects), while the index lists are applied to a window-indexed windows_dataset built with a 50 s window and 0.01 s stride. Cell 37 is %%capture, so no committed output records the count. E2c shows the verdict is invariant to N anyway.",
+      "evidence": "E4e; E1 committed_outputs_present=false; E2c sweep."
+    }
+  ],
+  "early_stop": true
+}
