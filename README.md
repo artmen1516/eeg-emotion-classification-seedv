@@ -1,4 +1,4 @@
-<a href="https://colab.research.google.com/github/artmen1516/emotions-classification-seedv/blob/main/process_seedv_raw_files_with_mne_from_drive.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+<a href="https://colab.research.google.com/github/artmen1516/eeg-emotion-classification-seedv/blob/main/process_seedv_raw_files_with_mne_from_drive.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
 # EEG-Based Emotion Classification Using Deep Learning Models
 
@@ -25,3 +25,14 @@ To run the code in this repository, you will need the following software and lib
 - **PyTorch** for implementing and training deep learning models
 - **Matplotlib** for visualizing results
 - **NumPy** and **Pandas** for data manipulation
+
+## Citation
+
+If you use this code, please cite the accompanying article:
+
+> Mendivil Sauceda, J. A., Marquez, B. Y., & Esqueda Elizondo, J. J. (2024).
+> **Emotion Classification from Electroencephalographic Signals Using Machine Learning.**
+> *Brain Sciences*, *14*(12), 1211. https://doi.org/10.3390/brainsci14121211
+
+- DOI: [10.3390/brainsci14121211](https://doi.org/10.3390/brainsci14121211)
+- ORCID: [0009-0003-5853-5307](https://orcid.org/0009-0003-5853-5307)
