@@ -58,9 +58,11 @@ Honest limitations
   user-visible ``training_percent = 0.8`` (460 vs 348 training trials at the
   recorded shape).  The ratio is a parameter; the default is the retained
   60/20/20 target, not a silent claim that cell 37 was repaired.
-* Exact ratios are usually unreachable at session granularity: the realised
-  split deviates from the requested ratio by at most one session, because
-  every partition must contain a whole number of sessions.
+* Exact ratios are usually unreachable at session granularity.  For the
+  default 60/20/20 ratios the realised split deviates by at most one session,
+  because every partition must contain a whole number of sessions.  For
+  strongly skewed ratios the min-one-session-per-partition repair can push the
+  deviation higher (e.g. 0.98/0.01/0.01 at three sessions gives 1/1/1).
 """
 
 from __future__ import annotations
