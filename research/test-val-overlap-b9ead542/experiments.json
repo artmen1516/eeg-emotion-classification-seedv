@@ -24,7 +24,8 @@
         "train_test_split": "train_indices, val_indices = train_test_split(",
         "train_test_split_args": "X_train.indices_, test_size=val_percent, shuffle=False",
         "val_subset": "val_subset = Subset(train_set, val_indices)"
-      }
+      },
+      "committed_score_tables": {"cell": 24, "lists": 48, "entries": 720, "scores_ge_4": 533, "note": "16 subjects x 3 sessions x 15 annotations; counting committed values >= 4 gives the N the notebook's own metadata implies for total_array_samples"}
     },
     {
       "experiment": "E2",
@@ -61,8 +62,12 @@
       "experiment": "E2c",
       "name": "Supplementary N-sensitivity sweep (threat: N is data-dependent)",
       "N_values_tested": 2000,
+      "N_values_with_defined_ratio": 1996,
+      "N_values_excluded_empty_testList": [2, 3, 4, 5],
+      "qualification": "the ratio is defined only when testList is non-empty, i.e. N >= 6; N = 2..5 produce testList = [] and ratio None (undefined, not 1.0)",
       "distinct_ratios": ["1/1"],
       "all_ratio_equal_1": true,
+      "N_533_implied_by_committed_scores": {"train_samples": 426, "testList": [427, 532], "n_test": 106, "n_val": 107, "validation": [426, 532], "n_intersection": 106, "ratio_exact": "1/1"},
       "examples": {"540": "1/1", "560": "1/1", "576": "1/1", "600": "1/1", "720": "1/1", "2160": "1/1"}
     },
     {
@@ -111,27 +116,34 @@
     },
     {
       "experiment": "E4e",
-      "name": "What total_array_samples counts",
+      "name": "What total_array_samples counts, and what windows_dataset contains",
       "expression": "total_array_samples = len(y), y = concatenation of epoch.metadata['target'] over list_of_epochs (score >= 4)",
       "unit": "score-filtered epochs (trials)",
       "annotations_per_session_file": 15,
       "sessions_per_subject": 3,
       "subjects": 16,
       "max_epochs_before_score_filter": 720,
-      "windows_dataset_length": "number of 50 s sliding windows (0.01 s stride, drop_last_window=True), far larger than len(y)",
-      "N_576_confirmed_by_committed_output": false
+      "committed_score_tables": {"lists": 48, "entries": 720, "scores_ge_4": 533},
+      "epoch_duration_s": "cell 22 start/end lists differ by exactly 50 s for all 45 intervals; cell 23 computes duration = end - start; cell 27 uses mne.Epochs(..., tmin=-0, tmax=50, baseline=None)",
+      "sampling_rate_hz": "200.0 (cell 31 committed output: 'sfreq: 200.0 Hz')",
+      "window_geometry": "cell 33: trial_window_time = 50 s -> int(50*200) = 10000 samples; stride 0.01 s -> 2 samples; drop_last_window=True. A 10000-sample window over a 10000-sample epoch admits exactly one full window, so every trial yields exactly one row.",
+      "windows_dataset_length": "len(windows_dataset) == len(list_of_epochs) == len(y) == N (one window per trial); the E2 base np.arange(N) is therefore derived from the committed code, not merely assumed",
+      "N_576_confirmed_by_committed_output": false,
+      "N_implied_by_committed_metadata": 533,
+      "N_576_status": "stipulated by the hypothesis; the committed score tables contain 533 scores >= 4, so the notebook's own metadata implies N = 533. Both values give ratio 1/1 (E2, E2c), as does every N >= 6 in the sweep."
     }
   ],
-  "analysis": "Primary measurement (E2): under the stipulated N = 576, the committed code yields train_samples = floor(0.8*576) = 460, testList = 461..575 (115 indices) and, because train_set was reassigned to windows_dataset before X_train was built, X_train.indices_ = 0..575 and train_test_split(test_size=0.19999999999999996, shuffle=False) returns validation = 460..575 (116 indices). Every one of the 115 test indices 461..575 is in the validation set, so |test intersect validation| = 115 and the ratio is exactly 115/115 = 1/1 = 1.0, with test minus validation empty. E2b shows the same ratio for ceil/floor/round variants of n_test, and E2c shows ratio 1/1 for every N tested (2..2000 plus 540,560,570,576,580,600,720,2160), so the verdict does not depend on the one-index sklearn rounding or on the exact value of N. This meets the pre-registered support criterion (ratio == 1.0 exactly). The refute criterion (ratio < 0.5) is not met, and the inconclusive band (0.5 <= ratio < 1.0) is not entered. The E3 counterfactual quantifies the base discrepancy: had the validation split been taken over trainList (1..460), validation would be 369..460 and its overlap with the test set would be 0/115 = 0.0, a difference of 1.0 from the primary result. E4 confirms the mechanism (train_set = windows_dataset at cell 37 line 22) and records additional internal inconsistencies (index 0 dropped, training labels off by one, trial-count lists applied to a window-indexed dataset, N = 576 never printed because the cell is %%capture).",
+  "analysis": "Primary measurement (E2): under the stipulated N = 576, the committed code yields train_samples = floor(0.8*576) = 460, testList = 461..575 (115 indices) and, because train_set was reassigned to windows_dataset before X_train was built, X_train.indices_ = 0..575 and train_test_split(test_size=0.19999999999999996, shuffle=False) returns validation = 460..575 (116 indices). Every one of the 115 test indices 461..575 is in the validation set, so |test intersect validation| = 115 and the ratio is exactly 115/115 = 1/1 = 1.0, with test minus validation empty. E2b shows the same ratio for ceil/floor/round variants of n_test, and E2c shows ratio 1/1 for every N with a non-empty testList (N >= 6; N = 2..5 yield testList = [] and an undefined ratio) over 2..2000 plus 540,560,570,576,580,600,720,2160, so the verdict does not depend on the one-index sklearn rounding or on the exact value of N. This meets the pre-registered support criterion (ratio == 1.0 exactly). The refute criterion (ratio < 0.5) is not met, and the inconclusive band (0.5 <= ratio < 1.0) is not entered. The E3 counterfactual quantifies the base discrepancy: had the validation split been taken over trainList (1..460), validation would be 369..460 and its overlap with the test set would be 0/115 = 0.0, a difference of 1.0 from the primary result. E4 confirms the mechanism (train_set = windows_dataset at cell 37 line 22) and shows the base is the full dataset because every trial yields exactly one 50 s window (epoch tmax = 50 s at 200 Hz = 10000 samples = window size), so len(windows_dataset) = len(y) = N. E4e also shows the committed score tables contain 533 scores >= 4, i.e. the notebook's own metadata implies N = 533; at N = 533 the committed expressions give train_samples = 426, testList = 427..532 (106), validation = 426..532 (107), intersection 106, ratio 1/1 - the same verdict. Remaining internal inconsistencies are the dropped index 0 and the one-sample shift in y_train_set; N is never printed because cell 37 is %%capture.",
   "status": "supported",
   "evidence": [
     "E2: |test| = 115 (461..575), |validation| = 116 (460..575), |test intersect validation| = 115, ratio = 1/1 = 1.0 exact; test minus validation = empty set; validation minus test = {460}.",
     "E2: sklearn 1.9.1, numpy 2.5.4, Python 3.12.15; train_test_split(np.arange(576), test_size=0.19999999999999996, shuffle=False) -> train 0..459 (460), validation 460..575 (116); ceil(115.2)=116, floor=115.",
     "E2b: ceil, floor and round n_test variants all give ratio 1/1 (validation 460..575 or 461..575).",
-    "E2c: supplementary sweep over 2000 values of N (2..2000 plus 540,560,570,576,580,600,720,2160) yields the single distinct ratio 1/1; the result is insensitive to N.",
+    "E2c: supplementary sweep over 2000 values of N (2..2000 plus 540,560,570,576,580,600,720,2160): for every N >= 6 (1996 values with a non-empty testList) the ratio is 1/1; N = 2,3,4,5 give testList = [] and an undefined ratio and are excluded by the ratio-is-not-None filter in the script. The result is insensitive to N.",
+    "E2c (N implied by committed scores): at N = 533, train_samples = 426, testList = 427..532 (106), validation = 426..532 (107), intersection = 106, ratio = 1/1. Same verdict as the stipulated N = 576.",
     "E3: counterfactual base trainList 1..460 gives validation 369..460, intersection with test = 0, ratio 0/1; zero-based variant 0..459 gives 368..459 and ratio 0/1. Absolute discrepancy vs E2 = 1.0.",
-    "E1: cell 37 quotes val_percent = 1 - training_percent with training_percent = 0.8 (cell 35), so test_size = 0.19999999999999996; the cell is %%capture and stores no output, so no committed number contradicts the reproduction.",
-    "E4d: skorch helper.py SliceDataset.__init__ sets indices_ = np.arange(len(dataset)) when indices is None; the committed line X_train = SliceDataset(train_set, idx=0) therefore resolves to the full dataset after train_set = windows_dataset, not to the training split.",
+    "E1: cell 37 quotes val_percent = 1 - training_percent with training_percent = 0.8 (cell 35), so test_size = 0.19999999999999996; the cell is %%capture and stores no output, so no committed number contradicts the reproduction. Cell 24's 48 score lists contain 720 entries, 533 of them >= 4, so the notebook's own metadata implies N = 533.",
+    "E4d/E4e: skorch helper.py SliceDataset.__init__ sets indices_ = np.arange(len(dataset)) when indices is None; the committed line X_train = SliceDataset(train_set, idx=0) therefore resolves to the full dataset after train_set = windows_dataset, not to the training split. The full dataset has one row per trial: cell 27 epochs are 50 s long (tmin=-0, tmax=50; all 45 committed start/end pairs differ by 50 s), cell 31's committed output gives sfreq = 200 Hz, and cell 33 uses a 10000-sample window (50 s) with drop_last_window=True, so each trial contributes exactly one window and len(windows_dataset) = len(y) = N.",
     "Comparison against criteria: measured ratio 1/1 equals 1.0 -> support criterion satisfied; measured ratio is not < 0.5 -> refute criterion not satisfied; measured ratio is not in [0.5, 1.0) -> inconclusive band not entered."
   ]
 }

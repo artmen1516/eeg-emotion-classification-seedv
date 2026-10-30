@@ -1,0 +1,43 @@
+{
+  "hypothesis": "In the committed code of cell 37 of process_seedv_raw_files_with_mne_from_drive.ipynb (training_percent = 0.8, N = 576 samples, val_percent = 1 - training_percent = 0.2), the validation index set produced by train_test_split(X_train.indices_, test_size=val_percent, shuffle=False) contains every index of the test set testList = range(floor(0.8*576)+1, 576) = range(461, 576), so that the overlap ratio |test intersect validation| / |test| equals exactly 1.0. The claim is false if any test index is absent from the validation set.",
+  "experiments": [
+    {
+      "id": "E1",
+      "name": "Committed-constant extraction from cell 37",
+      "procedure": "Parse the notebook JSON (process_seedv_raw_files_with_mne_from_drive.ipynb) and read cell index 37 (0-based 'Model Training' code cell) without executing it. Record verbatim: training_percent (0.8), val_percent assignment (1 - training_percent), the expressions for total_array_samples, train_samples, trainList and testList, the assignment sequence for train_set and X_train, and the train_test_split call parameters (test_size, shuffle). Record the notebook commit SHA. No computation of the overlap happens in this step.",
+      "output": "A verbatim constant table used to justify every number used in E2-E4 (values are copied, not guessed)."
+    },
+    {
+      "id": "E2",
+      "name": "Primary reproduction of the notebook's index arithmetic (base = full X_train.indices_)",
+      "procedure": "In a throwaway Python script placed inside the record directory (never imported by the notebook), reproduce the committed expressions with N = 576: train_samples = floor(0.8*576) = 460; testList = list(range(train_samples+1, N)) = 461..575; build the validation base exactly as the committed code implies, i.e. X_train = SliceDataset(windows_dataset, idx=0) because train_set was reassigned from splits['train'] to windows_dataset, so X_train.indices_ is the full positional range 0..575; call sklearn.model_selection.train_test_split(np.arange(576), test_size=0.2, shuffle=False) and take the second returned array as validation. Record |test|, |validation|, the first/last elements of each, |test intersect validation|, and the ratio |test intersect validation| / |test| computed as an exact rational (integers), not as a rounded float. Also record n_train/n_test selected by the installed scikit-learn to expose ceil/floor behaviour.",
+      "output": "Primary measurement: test set, validation set (as explicit ranges), intersection size, overlap ratio."
+    },
+    {
+      "id": "E3",
+      "name": "Base-sensitivity control (validation computed over trainList)",
+      "procedure": "In the same throwaway script, recompute the validation partition with trainList (1..460) as the base instead of the full dataset: train_test_split(np.arange(1, 461), test_size=0.2, shuffle=False), take the second returned array, and compute its overlap with testList (461..575). This is the counterfactual base implied by the sentence 'validation indices from train_test_split(X_train.indices_)' if X_train were the training split rather than the full window dataset. Record the resulting ratio and explicitly compare it with E2 to quantify the discrepancy caused by the train_set reassignment.",
+      "output": "Control ratio, reported as a discrepancy finding; it does not replace the E2 primary verdict unless E2's base is shown to be misread."
+    },
+    {
+      "id": "E4",
+      "name": "Internal-consistency and executability audit of the split block",
+      "procedure": "Static inspection only (no notebook execution): (a) confirm that trainList and testList partition 0..N-1 except for the dropped first sample; (b) compare len(test_set) implied by testList (115) with len(y_test_set) implied by y[train_samples+1:] (115); (c) compare len(y_train_set) = y[0:460] with trainList = 1..460 and note any off-by-one label misalignment; (d) check whether braindecode's SliceDataset actually exposes an .indices_ attribute in the version used by the notebook, and whether the committed cell would raise AttributeError at that line; (e) check whether total_array_samples is the number of 50 s windows (50 s window, 0.01 s stride, drop_last_window=True) rather than 576 trials. Record each item as a yes/no/likely finding with the exact source line quoted.",
+      "output": "Findings list supporting or undermining the assumption that a validation set exists at all and that N = 576 is the operative count."
+    }
+  ],
+  "support_criterion": "supported if and only if the primary ratio from E2 satisfies |test intersect validation| / |test| == 1.0 exactly (equivalently |test intersect validation| == |test| and |test| > 0).",
+  "refute_criterion": "refuted if and only if the primary ratio from E2 is < 0.5 (equivalently fewer than half of the test indices appear in the validation set).",
+  "inconclusive_band": "inconclusive if 0.5 <= ratio < 1.0. Additionally, the result is declared inconclusive (not refuted, not supported) if the measurement cannot be formed, specifically: |test| == 0; or the committed code path is shown by E4 to be non-executable as written (e.g. X_train.indices_ raises AttributeError) so that the notebook's validation set is undefined rather than merely different; or N is shown not to be 576 and no single defensible value of N can be fixed from the committed notebook.",
+  "threats": [
+    "N = 576 is stipulated by the hypothesis, but the notebook derives total_array_samples from len(y) where y is built from 50 s windows (0.01 s stride, drop_last_window=True) over score-filtered epochs, so the true sample count is a data-dependent number of windows and may not be 576; the whole overlap arithmetic is conditional on this value.",
+    "The notebook overwrites train_set = splits['train'] with train_set = windows_dataset before constructing X_train, so the validation split is taken over the full dataset rather than over trainList; a reader may assume the base is trainList, in which case the answer changes completely (E3 quantifies this).",
+    "braindecode's SliceDataset does not obviously expose .indices_ (that attribute belongs to Subset objects), so the committed line may raise AttributeError and the validation set may never be created in practice; static reading cannot fully settle this without executing the notebook, which is forbidden here.",
+    "windows_dataset.split with 1-based-looking lists (trainList starting at 1, testList ending at N-1) silently drops sample 0 and uses positional indexing, so train+test cover 575 of 576 samples; any comparison that assumes a perfect partition of 0..N-1 is slightly off.",
+    "y_train_set = y[0:train_samples] is indexed from 0 while trainList starts at 1, and y_test_set = y[train_samples+1:] is consistent with testList; the train labels therefore appear misaligned by one sample, showing the split block is internally inconsistent and weakening any inference about intended semantics.",
+    "scikit-learn's ceil-based test-size computation and version differences can change n_test by one at the boundary; the result should be recorded with the library version and the exact n_train/n_test so a one-index difference is visible rather than hidden in a ratio.",
+    "The notebook is a stateful Colab artifact whose committed outputs may not correspond to a clean top-to-bottom run, and %%capture hides cell 37 output in the committed file; the committed logic is the only admissible evidence, so behaviour under the author's actual kernel state is unknowable.",
+    "Overlap at the index level does not by itself prove that the same labelled examples are duplicated: the dataset is a concatenation of windows, and index identity is only evidence of leakage if indices are positional and stable across the full windows_dataset.",
+    "Because the split is unshuffled and contiguous, any index-level result is an artefact of ordering assumptions (0..N-1) rather than of a randomized sampling procedure; the finding describes this committed code only and does not generalise to shuffled splits."
+  ]
+}

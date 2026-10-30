@@ -2,27 +2,23 @@
   "findings": [
     {
       "title": "Every test index is also a validation index (ratio exactly 1.0)",
-      "evidence": "Under the committed cell-37 arithmetic with N = 576 and training_percent = 0.8: testList = 461..575 (|test| = 115) and validation = 460..575 (|val| = 116) from train_test_split(np.arange(576), test_size = 1-0.8, shuffle=False). Intersection = 461..575, so |test intersect validation| / |test| = 115/115 = 1/1 = 1.0 exactly. test minus validation is empty; validation minus test is {460}."
+      "evidence": "Committed cell-37 arithmetic at N = 576, training_percent = 0.8: train_samples = floor(460.8) = 460, testList = range(461, 576) = 461..575 (|test| = 115), and train_test_split(np.arange(576), test_size = 1-0.8 = 0.19999999999999996, shuffle=False) returns validation = 460..575 (|val| = 116, sklearn ceil of 115.2). Intersection = 461..575, so |test intersect validation| / |test| = 115/115 = 1/1 = 1.0 exactly (exact rational, not a rounded float); test minus validation is empty and validation minus test = {460}. Ceil/floor/round variants of n_val all give 1/1."
     },
     {
-      "title": "The overlap arises because the validation base is the full dataset, not the training split",
-      "evidence": "Cell 37 sets train_set = splits['train'] and then overwrites it with train_set = windows_dataset before X_train = SliceDataset(train_set, idx=0). skorch's SliceDataset sets indices_ = np.arange(len(dataset)), so the validation split covers 0..575. Recomputing over trainList (1..460) yields validation 369..460 and overlap 0/115 = 0.0, a discrepancy of 1.0."
+      "title": "The overlap is caused by overwriting the training split with the full dataset",
+      "evidence": "Cell 37 assigns train_set = splits['train'], then two lines later reassigns train_set = windows_dataset before X_train = SliceDataset(train_set, idx=0). skorch's SliceDataset sets indices_ = np.arange(len(dataset)), so the validation base is the whole dataset (0..575). Recomputing the same split over trainList (np.arange(1, 461)) gives validation 369..460 and |test intersect validation| = 0, ratio 0/115 = 0.0 - a discrepancy of 1.0 from the primary measurement. The base is not merely assumed: cell 27 epochs are 50 s long, cell 31's committed output gives sfreq = 200 Hz, and cell 33 uses a 10000-sample (50 s) window with drop_last_window=True, so each trial yields exactly one window and len(windows_dataset) = len(y) = N."
     },
     {
-      "title": "Test-set leakage into validation and model selection in the committed run",
-      "evidence": "val_subset = Subset(train_set, val_indices) is passed as predefined_split to EEGClassifier, and test_set (indices 461..575) is later scored with clf.score. Because all 115 test indices are inside val_indices, validation/early stopping saw the entire test set, so the reported test accuracy is not held out."
+      "title": "Consequence: the test set is used during model selection in the committed run",
+      "evidence": "val_subset = Subset(train_set, val_indices) is handed to EEGClassifier as predefined_split, and test_set is later scored with clf.score. Because all 115 test indices lie inside val_indices, the validation/early-stopping set contains the entire test set, so the reported test accuracy is not a held-out measurement of the committed pipeline. This follows directly from the measured index sets (461..575 subset of 460..575)."
     },
     {
-      "title": "The result is robust to sklearn rounding and to the exact value of N",
-      "evidence": "ceil(n_test) = 116 gives validation 460..575 and ratio 1/1; floor/round give 461..575 and ratio 1/1. A sweep of 2000 values of N (2..2000 plus 540, 560, 570, 576, 580, 600, 720, 2160) produced the single distinct ratio 1/1."
+      "title": "The verdict does not depend on the value of N, which is stipulated rather than recorded",
+      "evidence": "Cell 37 is %%capture and prints 'Total Array Samples' to nowhere, so N = 576 is the hypothesis's stipulation. The notebook's own committed score tables (cell 24: 48 lists x 15 entries) contain 533 scores >= 4, implying N = 533; at N = 533 the expressions give train_samples = 426, testList = 427..532 (106), validation = 426..532 (107), intersection 106, ratio 1/1. A sweep of 2000 N values gives ratio 1/1 for every N with a non-empty testList (N >= 6; N = 2..5 are undefined), so the result is structural: validation starts at N - ceil(0.2N) <= floor(0.8N) + 1."
     },
     {
-      "title": "The split block is internally inconsistent (dropped sample, label shift, mixed index spaces)",
-      "evidence": "trainList 1..460 and testList 461..575 are disjoint and cover 1..575 but never select index 0; y_train_set = y[0:460] pairs labels 0..459 with windows 1..460 (one-sample shift); y_test_set = y[461:] matches len(testList) = 115 in count but labels epochs while test_set indexes windows; total_array_samples = len(y) is the score-filtered epoch count (<= 720), not the number of 50 s windows."
-    },
-    {
-      "title": "N = 576 is a stipulated parameter, not a value the committed notebook records",
-      "evidence": "Cell 37 begins with %%capture and stores no outputs, so 'Total Array Samples' is not present in the committed file. total_array_samples = len(y) where y concatenates epoch.metadata['target'] over the score-filtered epochs; with 15 annotations per session file, 3 sessions and 16 subjects the pre-filter maximum is 720, so 576 is plausible but unverified."
+      "title": "The split block is internally inconsistent (dropped index 0 and a one-sample label shift)",
+      "evidence": "trainList (1..460) and testList (461..575) are disjoint and cover 1..575, so index 0 is never selected (575 of 576 slots used). y_train_set = y[0:460] pairs labels 0..459 with window indices 1..460 - a one-sample shift - while y_test_set = y[461:] matches len(testList) = 115 in count. These are independent defects of the same block, recorded as static-audit observations rather than as changes to the primary ratio."
     }
   ]
 }
