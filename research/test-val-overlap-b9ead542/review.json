@@ -1,41 +1,37 @@
 {
-  "verdict": "supported",
+  "verdict": "accept",
   "evidence": [
-    "E2 primary: N=576, training_percent=0.8 -> train_samples=460, testList=461..575 (115), val_percent=0.19999999999999996, validation=460..575 (116); |test intersect validation| = 115; ratio = 115/115 = 1/1 = 1.0 exactly.",
-    "E2b/e2c: ratio stays 1/1 for ceil/floor/round n_test variants and across 2000 tested values of N, so no rounding or N-dependence artifact produced the result.",
-    "Pre-registered support criterion (ratio == 1.0 exactly) is met; refute criterion (ratio < 0.5) and inconclusive band (0.5 <= ratio < 1.0) are not met.",
-    "E3 control: with validation computed over trainList (1..460) the ratio would be 0/1, showing the primary result depends entirely on the train_set = windows_dataset reassignment."
+    "Experiment fidelity: all four pre-registered experiments (E1 constant extraction, E2 primary arithmetic, E3 base-sensitivity control, E4 static audit) were run and reported, and the support/refute/inconclusive thresholds in experiments.json are identical to research/hypothesis-plan.json. The criteria were not moved after seeing data.",
+    "Independent check of E1: cell 37 of the committed notebook contains exactly the quoted lines, including `train_set = splits['train']`, `test_set = splits['test']`, the overwrite `train_set = windows_dataset`, `X_train = SliceDataset(train_set, idx=0)`, and `train_test_split(X_train.indices_, test_size=val_percent, shuffle=False)` with `val_percent = 1 - training_percent`; `training_percent = 0.8` is committed in cell 35. Cell 37 is `%%capture` with no committed outputs, and the notebook blob is still 4c31f50269e1f994c8fe89ed4baa5ff10af6e237 (unchanged since 203ae91), so the quoted evidence is genuine.",
+    "Independent check of E2 arithmetic: with N = 576, train_samples = floor(460.8) = 460, testList = range(461, 576) = 461..575 (115 indices). With base 0..575 and test_size = 0.19999999999999996, sklearn's ceil gives n_val = 116, validation = 460..575; hence test minus validation is empty and |test and validation| / |test| = 115/115 = 1.0 exactly. E2b shows the floor/round boundary (validation 461..575) also gives 1.0, so the result is not a one-index rounding artifact.",
+    "Independent check of the load-bearing E4d: upstream skorch `skorch/helper.py` defines `SliceDataset.__init__` with `self.indices_ = (self.indices if self.indices is not None else np.arange(len(self.dataset)))` (verified by fetching the current master source). The committed line therefore does not raise AttributeError, and because `train_set` was overwritten with `windows_dataset`, the validation base is the full dataset, not trainList. This settles the plan's 'non-executable code path' inconclusive branch in favour of a formable measurement.",
+    "Status vs criteria: measured ratio = 1.0 exactly satisfies the pre-registered support criterion; it is not < 0.5 (refute) and not in [0.5, 1.0) (inconclusive). The recorded status 'supported' is therefore implied by the recorded measurement, and E2c shows the same ratio holds across a wide range of N, so the unverified absolute sample count does not threaten the pre-registered outcome.",
+    "E3 is an honest control rather than a substitute: validation over trainList (1..460) gives 369..460, intersection 0, ratio 0.0, and the record reports the 1.0 discrepancy and attributes the primary result to the `train_set = windows_dataset` overwrite instead of hiding it.",
+    "Analysis quality gap (correctable, not fatal): E4e, round-1.md, report.json finding 5 and PAPER.md E4/threat 2 assert that `windows_dataset` has 'far more' rows than `len(y)` because windows use a 0.01 s stride. The committed facts contradict this: cell 27 creates epochs with `tmin=-0, tmax=50`, cell 31's committed output shows `sfreq: 200.0 Hz`, and the committed session start/end lists give 50 s for all 45 annotated trials per session; with a 50 s window and `drop_last_window=True`, each trial yields exactly one window. So len(windows_dataset) == len(y) == N, which means the E2 base `np.arange(N)` is derivable from the committed code rather than merely stipulated, and the 'trial counts applied to a window-indexed dataset' mechanism is misdescribed.",
+    "Analysis gap (correctable, not fatal): the record says N = 576 is 'plausible but unverified', yet the 48 committed score tables in cell 24 (subject1..16 x session1..3, 15 scores each) contain 533 values >= 4, so the number the committed metadata implies for `total_array_samples` is 533, not 576. At N = 533: train_samples = 426, test = 427..532 (106 indices), validation = 426..532 (107 indices), intersection 106, ratio = 1.0 - the same verdict, and N = 533 is inside the E2c sweep, but the record never surfaces this value or states the arithmetic.",
+    "Reporting overstatement (minor): E2c's `distinct_ratios: ['1/1']` and '2000 values of N -> single ratio 1/1' are computed by filtering out `ratio is None` (script line `if r is not None`). For N = 2..5 the generated testList is empty, so the ratio is undefined, not 1.0. The claim should be restricted to N with |test| > 0. This does not affect the N = 576 measurement.",
+    "Overall: the planned experiments were run as designed, the recorded measurement does imply 'supported' under the frozen criteria, and the main threats (unverified N, base reassignment, static-reading limits, rounding, ordering) are acknowledged. The defects identified are factual/interpretive errors in the audit and robustness narrative that do not change the primary ratio, so no new measurement of the hypothesis is required."
   ],
   "findings": [
     {
-      "title": "Test set is a strict subset of the validation set under the committed code",
-      "detail": "Validation 460..575 contains all 115 test indices 461..575 plus training index 460; test minus validation is empty.",
-      "evidence": "experiment_results.json E2_primary (n_intersection=115, test_minus_val_first10=[], val_minus_test_first10=[460], ratio 1/1)."
+      "title": "Correct the window-count mechanism in E4e (one window per trial, not 'far more')",
+      "detail": "In experiments.json E4e, round-1.md, report.json finding 5 and PAPER.md (E4 table and threat 2), remove the claim that windows_dataset has far more rows than len(y). Cite instead: cell 27 `mne.Epochs(..., tmin=-0, tmax=50, ...)`, cell 31 committed output `sfreq: 200.0 Hz`, all committed session durations equal 50 s, window 50 s with drop_last_window=True -> exactly one window per trial, hence len(windows_dataset) == len(y) == N. State that base = np.arange(len(windows_dataset)) = np.arange(N) is derived from the committed code, which upgrades the E2 justification from 'stipulated' to 'derived'.",
+      "evidence": "process_seedv_raw_files_with_mne_from_drive.ipynb cells 22, 27, 31, 33; E4e text in experiments.json; PAPER.md lines describing windows_dataset as far larger."
     },
     {
-      "title": "The validation base is the full windows_dataset, not trainList",
-      "detail": "Cell 37 assigns splits['train'] to train_set and then immediately overwrites it with train_set = windows_dataset; X_train is built from that overwritten value, so X_train.indices_ = np.arange(len(windows_dataset)).",
-      "evidence": "E1 verbatim lines 22-24; E4d; skorch helper.py SliceDataset.__init__ sets indices_ = np.arange(len(dataset))."
+      "title": "Surface N = 533 implied by the committed score tables",
+      "detail": "Add to E1/E4e and to the paper that the 48 committed subject/session score lists contain 533 scores >= 4, so the notebook's own metadata implies total_array_samples = 533; record the resulting split explicitly (train_samples = 426, test = 427..532 (106), validation = 426..532 (107), intersection 106, ratio 1/1). Keep N = 576 as the hypothesis-stipulated parameter, but restate 'plausible but unverified' as 'stipulated; committed metadata implies 533; both give ratio 1.0'. At least two arithmetic lines must be added to experiment_results.json for N = 533 (no notebook execution needed).",
+      "evidence": "Notebook cell 24 score tables (48 lists, 15 entries each; count of values >= 4 is 533); notebook cell 30 `epochs[epochs.metadata['score'] >= 4]`; E2c sweep already includes N = 533 but does not report it."
     },
     {
-      "title": "Base discrepancy is decisive (ratio 1.0 vs 0.0)",
-      "detail": "If a reader assumes the validation split is computed over trainList, validation is 369..460 and shares no index with the test set (ratio 0/1). The committed reassignment reverses the conclusion.",
-      "evidence": "E3 primary_counterfactual and zero_based_variant; discrepancy_vs_E2_absolute = 1.0."
+      "title": "Qualify the N-sweep claim for empty test sets",
+      "detail": "Rewrite the E2c/round-1/paper sentence so it reads 'for every tested N with a nonempty testList (N >= 6), the ratio is 1/1', and report the number of N values excluded because |test| = 0 (N = 2, 3, 4, 5 give ratio undefined/None). The script's `if r is not None` filter should be documented, not silently applied.",
+      "evidence": "experiment_index_arithmetic.py lines 148-158 (`ratios = {r for r, _, _ in sweep.values() if r is not None}`); `overlap()` returns ratio None when the test set is empty."
     },
     {
-      "title": "Consequence: test windows leak into model selection",
-      "detail": "Since val_subset (460..575) is passed to EEGClassifier as predefined_split and clf.score is later evaluated on test_set (461..575), every scored test window was also used for validation/early stopping. Reported test accuracy is therefore not a held-out estimate.",
-      "evidence": "E2 primary (all 115 test indices inside validation); cell 37 lines for predefined_split(val_subset) and clf.score(test_set, y=y_test_set)."
-    },
-    {
-      "title": "Split block is internally inconsistent",
-      "detail": "trainList 1..460 and testList 461..575 leave index 0 unused; y_train_set = y[0:460] pairs labels 0..459 with windows 1..460, an off-by-one label shift; y_test_set and testList lengths match (115) but index different spaces (epochs vs windows).",
-      "evidence": "E4a, E4b, E4c."
-    },
-    {
-      "title": "N = 576 is stipulated, not verified by the notebook",
-      "detail": "total_array_samples = len(y) counts score-filtered epochs (<= 720 = 15 annotations x 3 sessions x 16 subjects), while the index lists are applied to a window-indexed windows_dataset built with a 50 s window and 0.01 s stride. Cell 37 is %%capture, so no committed output records the count. E2c shows the verdict is invariant to N anyway.",
-      "evidence": "E4e; E1 committed_outputs_present=false; E2c sweep."
+      "title": "Align the paper's consequence wording with the verified index mapping",
+      "detail": "PAPER.md threat 2 currently says index overlap 'establishes overlap of the committed index sets, not that the same labelled examples were duplicated'. Given one window per trial and positional, stable indices, state plainly that val_subset = Subset(windows_dataset, 460..575) and test_set = Subset(windows_dataset, 461..575) reference the same underlying windows, then keep the ordering/positional caveat separately. No change to the verdict or ratio is implied.",
+      "evidence": "Notebook cell 37 `val_subset = Subset(train_set, val_indices)`, `test_set = splits['test']`, `clf.score(test_set, y=y_test_set)`; E2 measurement 461..575 subset of 460..575."
     }
   ],
   "early_stop": true
