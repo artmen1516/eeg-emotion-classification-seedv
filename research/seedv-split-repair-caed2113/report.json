@@ -1,0 +1,32 @@
+{
+  "findings": [
+    {
+      "title": "The committed notebook still ships a split with no held-out test set",
+      "evidence": "Cell 37 of process_seedv_raw_files_with_mne_from_drive.ipynb (sha256 35d98aa4...a5142fc) computes train_samples=floor(0.8*576)=460, testList=range(461,576) (115 indices), and carves val from all 576 indices with train_test_split(..., test_size=0.2, shuffle=False), which gives val=460..575 (116). Test is a subset of validation at 115/115 = 100% of test; val-minus-test={460}. Because 460 mod 12 = 4, session block 456..467 straddles train/validation. The notebook was parsed, never executed, and was not modified by this change."
+    },
+    {
+      "title": "The retained improvement is now an applied, tested reference implementation rather than prose",
+      "evidence": "seedv_split.py adds split_indices(n_sessions, trials_per_session, train_ratio=0.6, val_ratio=0.2, test_ratio=0.2, seed=42) using only math and random. At the recorded 48x12 geometry with seed 42 it returns train=348 (29 sessions), val=120 (10), test=108 (9); the three sets are pairwise disjoint, their union is exactly range(576), and every 12-index session block lies wholly within one partition. This reproduces the prior audit's retained 348/120/108 replacement exactly."
+    },
+    {
+      "title": "The candidate satisfies a non-vacuous structural contract over the whole correctness range",
+      "evidence": "Across 160 grid inputs (n_sessions 3..59 at trials_per_session 1 and 2; n_sessions 3..48 at 12) the candidate passes 160/160 under non-empty + pairwise disjoint + exact-once coverage + whole-session integrity. Over N=0..1000 the parent passes only 6/1001 under the audit's disjointness+coverage-only contract (the six cases with an empty test set) and 0/1001 once non-emptiness is required, so empty partitions were previously counted as successes. The repair does not inherit that loophole: a min-one-session-per-partition repair makes 3 sessions yield 1/1/1."
+    },
+    {
+      "title": "The improvement is reproducible across calls and processes and costs nothing at the goal's input size",
+      "evidence": "Repeated calls are element-wise identical; the serialized output at 48x12 hashes to 1b8bc0aaeee1afb6055359e283e3a4625887e84082bfa1fef44b1f0285a612e8 under PYTHONHASHSEED 0, 1 and 12345; global random state is untouched; seed 7 changes the partition. Best of 5 with time.perf_counter at 48x12: parent 0.0042 ms, candidate 0.0758 ms (median 0.0767), peak traced memory 42.9 KiB. At n=100000: 0.8738 ms vs 10.5176 ms. Timings are machine-specific and are not correctness evidence."
+    },
+    {
+      "title": "Input hardening closes the silent-failure paths the challenge measured",
+      "evidence": "NaN is rejected by an isfinite check before the ratio-sum tolerance (a naive abs(sum-1)>1e-9 check accepts NaN); math.fsum with 1e-9 tolerance accepts decimal triples that sum to 0.9999999999999999 such as (0.7,0.2,0.1) and (0.3,0.35,0.35); negative-but-summing-to-one triples, zero ratios, ratio 1.0, bool/float counts, n_sessions<3 and trials_per_session<1 all raise ValueError. validate_partition raises ValueError for duplicated indices, missing indices, out-of-range indices and sessions straddling partitions."
+    },
+    {
+      "title": "The regression test bites on the actual defect and both pytest invocation styles are green",
+      "evidence": "test_repro_split_disjoint.py at the repository root reconstructs the parent from committed literals without sklearn, asserts 460/116/115 sizes, the 115/115 test-in-val overlap, the {460} val-only index and the 456..467 straddle, and asserts validate_partition rejects the parent; it then asserts the replacement's 348/120/108 partition, disjointness, exact coverage, whole-session integrity, absence of the subset relation, seed-42 reproducibility and seed-7 difference. `python -m pytest -q` and `pytest -q` both report 40 passed; plain-file runs report 36 and 4 passed."
+    },
+    {
+      "title": "Scope limits are stated rather than papered over",
+      "evidence": "The notebook and README are unchanged, so the repository's shipped pipeline is still leaky until cell 37 imports the helper; this change is an additive, independently tested extraction. Session-level disjointness is not subject disjointness (SEED-V is 16 subjects x 3 sessions per external knowledge, so a 29/10/9 session split can still share subjects across train and test). The default 0.6/0.2/0.2 deliberately differs from the notebook's training_percent=0.8 (348 vs 460 training trials at the recorded layout). The rectangular (n_sessions, trials_per_session) model cannot represent the 7-15 trials/session layout implied by cell 24. No accuracy was measured or reproduced."
+    }
+  ]
+}
